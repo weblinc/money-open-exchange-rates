@@ -31,6 +31,7 @@ class Money
         if has_valid_rates?(text)
           store_in_cache(text)
         end
+        nil
       rescue Errno::ENOENT
         raise InvalidCache
       end
@@ -94,7 +95,13 @@ class Money
       end
 
       def exchange_rates
-        @doc = MultiJson.decode(read_from_cache || read_from_url)
+        cached = if cache
+                   read_from_cache || save_rates || read_from_cache
+                 else
+                   nil
+                 end
+
+        @doc = MultiJson.decode(cached || read_from_url)
         @oer_rates = @doc['rates']
         @doc['rates']
       end
